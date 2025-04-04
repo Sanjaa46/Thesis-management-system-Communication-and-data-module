@@ -10,6 +10,7 @@ use App\Http\Controllers\TopicController;
 use App\Http\Controllers\TopicDetailController;
 use App\Http\Controllers\TopicRequestController;
 use App\Http\Controllers\TopicResponseController;
+use App\Http\Controllers\Auth\OAuthController;
 
 //department
 Route::get('/proposalform', [ProposalFormController::class, 'index']);
@@ -50,8 +51,8 @@ Route::get('/topics/topiclistproposedbyuser', [TopicController::class, 'getTopic
 
 
 // OAuth Authentication Routes
-Route::get('/oauth/redirect', [App\Http\Controllers\Auth\OAuthController::class, 'redirectToProvider'])->name('oauth.redirect');
-Route::get('/oauth/callback', [App\Http\Controllers\Auth\OAuthController::class, 'handleProviderCallback'])->name('oauth.callback');
+Route::get('/oauth/redirect', [OAuthController::class, 'redirectToProvider'])->name('oauth.redirect');
+Route::get('/oauth/callback', [OAuthController::class, 'handleProviderCallback'])->name('oauth.callback');
 Route::get('/oauth/refresh', [App\Http\Controllers\Auth\OAuthController::class, 'refreshToken'])->name('oauth.refresh');
 Route::get('/oauth/logout', [App\Http\Controllers\Auth\OAuthController::class, 'logout'])->name('oauth.logout');
 

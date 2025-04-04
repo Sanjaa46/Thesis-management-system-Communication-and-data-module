@@ -25,3 +25,17 @@ Route::get('/topic_requests_teacher', [TopicRequestController::class, 'getReques
 
 // routes/api.php
 Route::middleware('oauth')->get('/user', [App\Http\Controllers\Api\UserController::class, 'user']);
+
+
+Route::middleware('oauth')->get('/token', function (Request $request) {
+    $tokenData = session(config('oauth.token_session_key'));
+    
+    if (!$tokenData || !isset($tokenData['access_token'])) {
+        return response()->json(['error' => 'No token available'], 401);
+    }
+    
+    return response()->json([
+        'access_token' => $tokenData['access_token'],
+        'expires_in' => $tokenData['expires_in'],
+    ]);
+});
