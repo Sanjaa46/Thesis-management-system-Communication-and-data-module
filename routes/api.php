@@ -22,9 +22,6 @@ Route::get('/department/{id}', [DepartmentController::class, 'show']);
 
 Route::get('/topic_requests_teacher', [TopicRequestController::class, 'getRequestedTopicByTeacher']);
 
-// Route::middleware('auth:sanctum')->get('/user', [App\Http\Controllers\Api\UserController::class, 'user']);
-
-// routes/api.php
 Route::middleware('auth:sanctum')->get('/user', [UserController::class, 'user']);
 
 

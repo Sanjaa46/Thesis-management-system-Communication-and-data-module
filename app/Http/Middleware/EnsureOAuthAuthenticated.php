@@ -17,28 +17,27 @@ class EnsureOAuthAuthenticated
      */
     public function handle(Request $request, Closure $next)
     {
+        // Log the session state for debugging
+        \Log::info('Middleware session check', [
+            'session_id' => session()->getId(),
+            'has_token' => session()->has(config('oauth.token_session_key')),
+        ]);
+        
         // Check if the user has OAuth tokens in the session
         $tokenData = session(config('oauth.token_session_key'));
         
         if (!$tokenData || !isset($tokenData['access_token'])) {
+            if ($request->expectsJson()) {
+                return response()->json(['error' => 'Unauthenticated'], 401);
+            }
+            
             // Store the intended URL if it's a GET request
             if ($request->isMethod('get')) {
                 session()->put('url.intended', $request->url());
             }
             
             // Redirect to the OAuth login route
-            return redirect()->route('oauth.redirect')
-                ->with('error', 'Please login to access this resource');
-        }
-        
-        // Check if the token is expired
-        if (isset($tokenData['expires_in']) && isset($tokenData['created_at'])) {
-            $expiresAt = $tokenData['created_at'] + $tokenData['expires_in'];
-            
-            if (time() >= $expiresAt && isset($tokenData['refresh_token'])) {
-                Log::info('OAuth token expired, redirecting to refresh');
-                return redirect()->route('oauth.refresh');
-            }
+            return redirect()->route('oauth.redirect');
         }
         
         return $next($request);

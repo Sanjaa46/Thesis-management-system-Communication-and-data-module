@@ -41,51 +41,47 @@ class OAuthController extends Controller
      */
     public function handleProviderCallback(Request $request)
     {
-        // Check the state parameter to prevent CSRF attacks
-        if ($request->state !== session('oauth_state')) {
-            Log::error('OAuth state mismatch');
-            return redirect()->route('home')->with('error', 'Invalid state parameter. Authentication failed.');
-        }
-
-        // Clear the state from the session
-        session()->forget('oauth_state');
-
         // Check if there's an error or the user denied access
         if ($request->has('error')) {
-            Log::error('OAuth error: ' . $request->error);
-            return redirect()->route('home')->with('error', 'Authentication failed: ' . $request->error_description);
+            \Log::error('OAuth error: ' . $request->error);
+            return redirect('http://localhost:4000/login')->with('error', 'Authentication failed: ' . $request->error_description);
         }
-
+    
         // Exchange the authorization code for an access token
         $code = $request->code;
         $tokenData = $this->oauthService->getAccessToken($code);
-
+    
         if (!$tokenData || !isset($tokenData['access_token'])) {
-            Log::error('Failed to obtain access token');
-            return redirect()->route('home')->with('error', 'Failed to obtain access token');
+            \Log::error('Failed to obtain access token');
+            return redirect('http://localhost:4000/login')->with('error', 'Failed to obtain access token');
         }
-
+    
+        // Add creation timestamp for expiration tracking
+        $tokenData['created_at'] = time();
+        
         // Store the tokens in the session
         session([config('oauth.token_session_key') => $tokenData]);
-
+        
+        // Debugging - Log session data
+        \Log::info('Token stored in session', [
+            'session_id' => session()->getId(),
+            'has_token' => session()->has(config('oauth.token_session_key')),
+            'token_type' => $tokenData['token_type'] ?? 'not_set',
+        ]);
+    
         // Get the user data
         $userData = $this->oauthService->getUserData($tokenData['access_token']);
-
+    
         if (!$userData) {
-            Log::error('Failed to fetch user data');
-            return redirect()->route('home')->with('error', 'Failed to fetch user data');
+            \Log::error('Failed to fetch user data');
+            return redirect('http://localhost:4000/login')->with('error', 'Failed to fetch user data');
         }
-
-        // Here you might want to:
-        // 1. Find or create the user in your database
-        // 2. Log the user in
-        // 3. Redirect to the intended URL
-        
-        // For now, we'll just redirect to home with the user data
+    
+        // Store the user data in the session as well
         session(['oauth_user' => $userData]);
         
-        return redirect()->route('home')->with('success', 'Authentication successful');
-        return redirect('http://localhost:4000/auth-success');
+        // Redirect to the frontend callback URL
+        return redirect('http://localhost:4000/auth');
     }
 
     /**
