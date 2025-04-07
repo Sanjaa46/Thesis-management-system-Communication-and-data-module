@@ -5,6 +5,7 @@ use App\Http\Controllers\TopicController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\TopicRequestController;
+use App\Http\Controllers\Api\UserController;
 
 
 Route::get('/proposalform', [ProposalFormController::class, 'index']);
@@ -24,7 +25,7 @@ Route::get('/topic_requests_teacher', [TopicRequestController::class, 'getReques
 // Route::middleware('auth:sanctum')->get('/user', [App\Http\Controllers\Api\UserController::class, 'user']);
 
 // routes/api.php
-Route::middleware('oauth')->get('/user', [App\Http\Controllers\Api\UserController::class, 'user']);
+Route::middleware('auth:sanctum')->get('/user', [UserController::class, 'user']);
 
 
 Route::middleware('oauth')->get('/token', function (Request $request) {

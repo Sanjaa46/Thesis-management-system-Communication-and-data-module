@@ -35,7 +35,6 @@ class EnsureOAuthAuthenticated
         if (isset($tokenData['expires_in']) && isset($tokenData['created_at'])) {
             $expiresAt = $tokenData['created_at'] + $tokenData['expires_in'];
             
-            // If the token is expired and we have a refresh token, attempt to refresh
             if (time() >= $expiresAt && isset($tokenData['refresh_token'])) {
                 Log::info('OAuth token expired, redirecting to refresh');
                 return redirect()->route('oauth.refresh');

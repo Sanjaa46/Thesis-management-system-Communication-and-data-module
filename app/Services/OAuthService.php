@@ -40,6 +40,7 @@ class OAuthService
      * @param string $state A random state parameter to prevent CSRF
      * @return string The authorization URL
      */
+    // This method correctly generates an authorization URL with state parameter
     public function getAuthorizationUrl($state = null)
     {
         $params = [
@@ -47,15 +48,15 @@ class OAuthService
             'response_type' => 'code',
             'redirect_uri' => $this->redirectUri,
         ];
-
+        
         if (!empty($this->scopes)) {
             $params['scope'] = $this->scopes;
         }
-
+        
         if ($state) {
             $params['state'] = $state;
         }
-
+        
         return $this->authorizationEndpoint . '?' . http_build_query($params);
     }
 
