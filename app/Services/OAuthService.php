@@ -40,7 +40,6 @@ class OAuthService
      * @param string $state A random state parameter to prevent CSRF
      * @return string The authorization URL
      */
-    // This method correctly generates an authorization URL with state parameter
     public function getAuthorizationUrl($state = null)
     {
         $params = [
@@ -69,6 +68,9 @@ class OAuthService
     public function getAccessToken($code)
     {
         try {
+            // Log attempt without sensitive data
+            Log::info('Exchanging authorization code for access token');
+            
             $response = $this->client->post($this->tokenEndpoint, [
                 'form_params' => [
                     'grant_type' => 'authorization_code',
@@ -79,9 +81,18 @@ class OAuthService
                 ],
             ]);
 
-            return json_decode($response->getBody(), true);
+            $tokenData = json_decode($response->getBody(), true);
+            
+            // Log success without exposing tokens
+            Log::info('Successfully obtained access token', [
+                'token_type' => $tokenData['token_type'] ?? 'unknown',
+                'expires_in' => $tokenData['expires_in'] ?? 'unknown',
+                'has_refresh_token' => isset($tokenData['refresh_token']),
+            ]);
+            
+            return $tokenData;
         } catch (GuzzleException $e) {
-            Log::error('Failed to get access token: ' . $e->getMessage());
+            $this->logRequestException('Failed to get access token', $e);
             return null;
         }
     }
@@ -95,15 +106,28 @@ class OAuthService
     public function getUserData($accessToken)
     {
         try {
+            // Mask the token for logging
+            $maskedToken = $this->maskString($accessToken);
+            Log::info('Fetching user data using token', [
+                'token' => $maskedToken,
+            ]);
+            
             $response = $this->client->get($this->resourceEndpoint, [
                 'headers' => [
                     'Authorization' => 'Bearer ' . $accessToken,
                 ],
             ]);
 
-            return json_decode($response->getBody(), true);
+            $userData = json_decode($response->getBody(), true);
+            
+            // Log success without exposing user data
+            Log::info('Successfully fetched user data', [
+                'data_count' => is_array($userData) ? count($userData) : 'not_array',
+            ]);
+            
+            return $userData;
         } catch (GuzzleException $e) {
-            Log::error('Failed to get user data: ' . $e->getMessage());
+            $this->logRequestException('Failed to get user data', $e);
             return null;
         }
     }
@@ -117,6 +141,12 @@ class OAuthService
     public function refreshToken($refreshToken)
     {
         try {
+            // Mask the token for logging
+            $maskedToken = $this->maskString($refreshToken);
+            Log::info('Refreshing access token', [
+                'refresh_token' => $maskedToken,
+            ]);
+            
             $response = $this->client->post($this->tokenEndpoint, [
                 'form_params' => [
                     'grant_type' => 'refresh_token',
@@ -126,9 +156,18 @@ class OAuthService
                 ],
             ]);
 
-            return json_decode($response->getBody(), true);
+            $tokenData = json_decode($response->getBody(), true);
+            
+            // Log success without exposing tokens
+            Log::info('Successfully refreshed access token', [
+                'token_type' => $tokenData['token_type'] ?? 'unknown',
+                'expires_in' => $tokenData['expires_in'] ?? 'unknown',
+                'has_refresh_token' => isset($tokenData['refresh_token']),
+            ]);
+            
+            return $tokenData;
         } catch (GuzzleException $e) {
-            Log::error('Failed to refresh token: ' . $e->getMessage());
+            $this->logRequestException('Failed to refresh token', $e);
             return null;
         }
     }
@@ -144,10 +183,13 @@ class OAuthService
         
         // Check if we have a cached token
         if (Cache::has($cacheKey)) {
+            Log::info('Using cached client credentials token');
             return Cache::get($cacheKey);
         }
         
         try {
+            Log::info('Obtaining new client credentials token');
+            
             $response = $this->client->post($this->tokenEndpoint, [
                 'form_params' => [
                     'grant_type' => 'client_credentials',
@@ -158,15 +200,89 @@ class OAuthService
 
             $tokenData = json_decode($response->getBody(), true);
             
+            // Log success without exposing tokens
+            Log::info('Successfully obtained client credentials token', [
+                'token_type' => $tokenData['token_type'] ?? 'unknown',
+                'expires_in' => $tokenData['expires_in'] ?? 'unknown',
+            ]);
+            
             // Cache the token for slightly less than its expiration time
             if (isset($tokenData['expires_in'])) {
-                Cache::put($cacheKey, $tokenData, $tokenData['expires_in'] - 60);
+                $cacheDuration = $tokenData['expires_in'] - config('oauth.token_refresh_buffer', 60);
+                Cache::put($cacheKey, $tokenData, $cacheDuration);
             }
             
             return $tokenData;
         } catch (GuzzleException $e) {
-            Log::error('Failed to get client credentials token: ' . $e->getMessage());
+            $this->logRequestException('Failed to get client credentials token', $e);
             return null;
         }
+    }
+    
+    /**
+     * Log an exception from HTTP requests without exposing sensitive data
+     * 
+     * @param string $message
+     * @param GuzzleException $e
+     * @return void
+     */
+    protected function logRequestException($message, GuzzleException $e)
+    {
+        $context = [
+            'exception' => get_class($e),
+            'message' => $e->getMessage(),
+            'code' => $e->getCode(),
+        ];
+        
+        // Add response info if available
+        if (method_exists($e, 'getResponse') && $e->getResponse()) {
+            $response = $e->getResponse();
+            $context['status_code'] = $response->getStatusCode();
+            $context['reason_phrase'] = $response->getReasonPhrase();
+            
+            // Try to get response body but don't include credentials
+            try {
+                $body = (string) $response->getBody();
+                // Don't log the entire body in case it contains sensitive info
+                $context['response_size'] = strlen($body);
+                
+                // Try to decode as JSON to log structured error info
+                $json = json_decode($body, true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    // Include only safe fields
+                    $safeFields = ['error', 'error_description', 'error_code', 'message'];
+                    foreach ($safeFields as $field) {
+                        if (isset($json[$field])) {
+                            $context['response_' . $field] = $json[$field];
+                        }
+                    }
+                }
+            } catch (\Exception $bodyEx) {
+                $context['body_error'] = $bodyEx->getMessage();
+            }
+        }
+        
+        Log::error($message, $context);
+    }
+    
+    /**
+     * Mask a string for safe logging (shows first 4 and last 4 chars only)
+     * 
+     * @param string $string The string to mask
+     * @return string The masked string
+     */
+    protected function maskString($string)
+    {
+        if (empty($string)) {
+            return '';
+        }
+        
+        $length = strlen($string);
+        
+        if ($length <= 8) {
+            return '****';
+        }
+        
+        return substr($string, 0, 4) . str_repeat('*', $length - 8) . substr($string, -4);
     }
 }

@@ -33,4 +33,19 @@ return [
     
     // Session key for storing tokens
     'token_session_key' => 'oauth_tokens',
+    
+    // Frontend URL for redirects
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:4000'),
+    
+    // Frontend routes
+    'frontend_routes' => [
+        'login' => '/login',
+        'auth' => '/auth',
+        'home' => '/',
+        'dashboard' => '/dashboard',
+    ],
+    
+    // Token expiration buffer time in seconds
+    // Refresh tokens this many seconds before they actually expire
+    'token_refresh_buffer' => env('OAUTH_TOKEN_REFRESH_BUFFER', 60),
 ];

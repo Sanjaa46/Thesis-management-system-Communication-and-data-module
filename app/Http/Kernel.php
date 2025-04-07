@@ -17,15 +17,6 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $middleware = [
-        // // \App\Http\Middleware\TrustHosts::class,
-        // \App\Http\Middleware\TrustProxies::class,
-        // \Fruitcake\Cors\HandleCors::class,
-        // // 'throttle:api',
-        // \App\Http\Middleware\CheckForMaintenanceMode::class,
-        // \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
-        // \App\Http\Middleware\TrimStrings::class,
-        // \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
-
         \Fruitcake\Cors\HandleCors::class,
         \App\Http\Middleware\TrustProxies::class,
         \App\Http\Middleware\CheckForMaintenanceMode::class,
@@ -40,31 +31,20 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $middlewareGroups = [
-        // 'web' => [
-        //     \App\Http\Middleware\EncryptCookies::class,
-        //     \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
-        //     \Illuminate\Session\Middleware\StartSession::class,
-        //     // \Illuminate\Session\Middleware\AuthenticateSession::class,
-        //     \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-        //     \App\Http\Middleware\VerifyCsrfToken::class,
-        //     \App\Http\Middleware\LocaleMiddleware::class,
-        //     \Illuminate\Routing\Middleware\SubstituteBindings::class,
-        //     \App\Domains\Auth\Http\Middleware\ToBeLoggedOut::class,
-
-
-        // ],
         'web' => [
             \App\Http\Middleware\EncryptCookies::class,
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
             \Illuminate\Session\Middleware\StartSession::class,
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class, // CSRF Middleware
+            \App\Http\Middleware\CheckOAuthTokenExpiration::class, // Add token expiration middleware
         ],
 
         'api' => [
             // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             'throttle:api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\CheckOAuthTokenExpiration::class, // Add token expiration middleware for API
         ],
 
         'admin' => [
