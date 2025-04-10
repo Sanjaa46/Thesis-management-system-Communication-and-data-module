@@ -27,5 +27,29 @@ class VerifyCsrfToken extends Middleware
     //     'topic/store',
     // ];
 
-    protected $except = ['*'];
+    protected $except = [
+        '2fa/*',
+        'debugbar/*',
+        'oauth/*',
+        'api/*',
+        'admin/*',
+        'department/*',
+        'impersonate/*',
+        'livewire/*',
+        'proposalform/*',
+        'protected-page/*',
+        'sanctum/*',
+        'teacher/*',
+        'student/*',
+        'topic-response/*',
+        'topic-requests/*',
+        'topic-requestsbyteacher/*',
+        'topic_confirm/*',
+        'topic_decline/*',
+        'topic/*',
+        'topic_confirmed/*',
+        'topic_requests_teacher/*',
+        'topics/*',
+        'topics_confirmed/*',
+    ];
 }

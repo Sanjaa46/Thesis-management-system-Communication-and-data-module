@@ -53,8 +53,9 @@ Route::get('/topics/topiclistproposedbyuser', [TopicController::class, 'getTopic
 // OAuth Authentication Routes
 Route::get('/oauth/redirect', [OAuthController::class, 'redirectToProvider'])->name('oauth.redirect');
 Route::get('/auth', [OAuthController::class, 'handleProviderCallback'])->name('oauth.callback');
-Route::get('/oauth/logout', [OAuthController::class, 'logout'])->name('oauth.logout');
-Route::get('/oauth/refresh', [OAuthController::class, 'refreshToken'])->name('oauth.refresh');
+Route::post('/api/oauth/exchange-token', [OAuthController::class, 'exchangeToken']);
+Route::post('/api/oauth/refresh-token', [OAuthController::class, 'refreshToken']);
+Route::get('/api/user', [OAuthController::class, 'getUserData']);
 
 // Example of protected route using OAuth middleware
 Route::middleware(['oauth'])->group(function () {

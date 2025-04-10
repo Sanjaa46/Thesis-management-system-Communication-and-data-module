@@ -45,7 +45,7 @@ class OAuthService
         $params = [
             'client_id' => $this->clientId,
             'response_type' => 'code',
-            'redirect_uri' => $this->redirectUri,
+            'redirect_uri' => $overrideRedirectUri ?: $this->redirectUri,
         ];
         
         if (!empty($this->scopes)) {
@@ -92,7 +92,11 @@ class OAuthService
             
             return $tokenData;
         } catch (GuzzleException $e) {
-            $this->logRequestException('Failed to get access token', $e);
+            Log::error('Failed to get access token: ' . $e->getMessage(), [
+                'code' => $e->getCode(),
+                'response' => $e->hasResponse() ? (string) $e->getResponse()->getBody() : 'No response',
+            ]);
+            
             return null;
         }
     }

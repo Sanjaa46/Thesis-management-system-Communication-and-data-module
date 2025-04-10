@@ -20,7 +20,7 @@ return [
     'client_secret' => env('OAUTH_CLIENT_SECRET', ''),
     
     // Redirect URI after authorization
-    'redirect_uri' => env('OAUTH_REDIRECT_URI', ''),
+    'redirect_uri' => env('OAUTH_REDIRECT_URI', 'http://localhost:4000/auth'),
     
     // OAuth scopes (space-separated)
     'scopes' => env('OAUTH_SCOPES', ''),
