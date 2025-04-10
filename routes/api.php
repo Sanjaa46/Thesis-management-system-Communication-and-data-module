@@ -25,6 +25,8 @@ Route::post('/oauth/token', [OAuthController::class, 'exchangeCodeForToken']);
 
 // Protected API routes
 Route::middleware('auth.api.token')->group(function () {
+    Route::get('/user/role', [App\Http\Controllers\Api\RoleController::class, 'getUserRole']);
+
     Route::get('/proposalform', [ProposalFormController::class, 'index']);
     Route::post('/proposalform', [ProposalFormController::class, 'update']);
     
