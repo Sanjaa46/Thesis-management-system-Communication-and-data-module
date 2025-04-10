@@ -99,63 +99,59 @@ class OAuthController extends Controller
             $tokenData = $this->oauthService->getAccessToken($code);
         
             if (!$tokenData || !isset($tokenData['access_token'])) {
-                Log::error('Failed to obtain access token', [
-                    'response' => $tokenData ? 'empty_token' : 'null_response',
-                ]);
-                
-                return redirect(config('oauth.frontend_url', 'http://localhost:4000') . '/login')
-                       ->with('error', 'Failed to obtain access token. Please try again or contact support.');
+                Log::error('Failed to obtain access token');
+                return redirect(config('oauth.frontend_url') . '/login?error=token_failure');
             }
         
             // Add creation timestamp for expiration tracking
             $tokenData['created_at'] = time();
             
-            // Store the tokens in the session
-            session([config('oauth.token_session_key') => $tokenData]);
-            
-            // Debugging - Log session data (without exposing tokens)
-            Log::info('Token stored in session', [
-                'session_id' => session()->getId(),
-                'has_token' => session()->has(config('oauth.token_session_key')),
-                'token_type' => $tokenData['token_type'] ?? 'not_set',
-                'expires_in' => $tokenData['expires_in'] ?? 'unknown',
-            ]);
-        
-            // Get the user data
+            // Get user data 
             $userData = $this->oauthService->getUserData($tokenData['access_token']);
-        
+            
             if (!$userData) {
-                Log::error('Failed to fetch user data');
-                return redirect(config('oauth.frontend_url', 'http://localhost:4000') . '/login')
-                       ->with('error', 'Successfully authenticated but failed to fetch your user profile. Please try again.');
+                return redirect(config('oauth.frontend_url') . '/login?error=no_user_data');
             }
-        
-            // Store the user data in the session as well
-            session(['oauth_user' => $userData]);
             
-            // Clear the state param since we don't need it anymore
-            session()->forget('oauth_state');
+            // Format user data
+            $formattedUser = [];
+            foreach ($userData as $item) {
+                $formattedUser[$item['Type']] = $item['Value'];
+            }
             
-            // Redirect to the frontend callback URL
-            $redirectUrl = session('url.intended', config('oauth.frontend_url', 'http://localhost:4000') . '/auth');
-            session()->forget('url.intended');
+            // Create a temporary token to verify the user
+            $tempToken = bin2hex(random_bytes(32));
             
-            Log::info('OAuth authentication completed successfully', [
-                'redirect_to' => $redirectUrl
-            ]);
+            // Store in cache for 5 minutes
+            \Cache::put('oauth_temp_token:'.$tempToken, [
+                'access_token' => $tokenData['access_token'],
+                'user_data' => $formattedUser
+            ], 300);
             
-            return redirect($redirectUrl);
+            // Redirect with the temporary token
+            return redirect(config('oauth.frontend_url') . '/auth?token=' . $tempToken);
+            
         } catch (\Exception $e) {
-            Log::error('Exception during OAuth callback processing: ' . $e->getMessage(), [
-                'exception' => get_class($e),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            
-            return redirect(config('oauth.frontend_url', 'http://localhost:4000') . '/login')
-                   ->with('error', 'An error occurred during authentication. Please try again or contact support.');
+            Log::error('Exception during OAuth callback: ' . $e->getMessage());
+            return redirect(config('oauth.frontend_url') . '/login?error=callback_exception');
         }
+
+
+        $tokenData['created_at'] = time();
+        session([config('oauth.token_session_key') => $tokenData]);
+        
+        // Add debug information
+        Log::info('Token stored in session', [
+            'session_id' => session()->getId(),
+            'has_token' => session()->has(config('oauth.token_session_key')),
+        ]);
+        
+        // Very important - save the session here
+        session()->save();
+        
+        // Redirect with SameSite=None cookie
+        return redirect(config('oauth.frontend_url'))
+            ->withCookie(cookie('laravel_session', session()->getId(), 120, '/', config('session.domain'), true, false, false, 'none'));
     }
 
     /**

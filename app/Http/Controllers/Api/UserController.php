@@ -25,6 +25,10 @@ class UserController extends Controller
             'session_id' => session()->getId(),
             'has_token' => session()->has(config('oauth.token_session_key')),
         ]);
+        Log::debug('Session data in user method', [
+            'session_id' => session()->getId(),
+            'all_session_data' => session()->all()
+        ]);
         
         if (!$tokenData || !isset($tokenData['access_token'])) {
             return response()->json(['authenticated' => false], 401);

@@ -15,15 +15,21 @@ class EnsureOAuthAuthenticated
      * @param  \Closure  $next
      * @return mixed
      */
+// Modify app/Http/Middleware/EnsureOAuthAuthenticated.php to handle both session and header tokens:
     public function handle(Request $request, Closure $next)
     {
-        // Log the session state for debugging
-        \Log::info('Middleware session check', [
-            'session_id' => session()->getId(),
-            'has_token' => session()->has(config('oauth.token_session_key')),
+        // Debug the current route to see if login routes are getting middleware applied
+        \Log::info('Current route:', [
+            'route' => $request->route(),
+            'path' => $request->path()
         ]);
         
-        // Check if the user has OAuth tokens in the session
+        // Don't redirect if already on OAuth routes
+        if ($request->routeIs('oauth.redirect') || $request->routeIs('oauth.callback')) {
+            return $next($request);
+        }
+        
+        // Check authentication logic here
         $tokenData = session(config('oauth.token_session_key'));
         
         if (!$tokenData || !isset($tokenData['access_token'])) {
