@@ -21,7 +21,7 @@ class OAuthService
     public function __construct()
     {
         $this->client = new Client([
-            'verify' => config('oauth.verify_ssl', true),
+            'verify' => false, // Host hiihed true bolgoh ystoi
             'timeout' => 30,
         ]);
 

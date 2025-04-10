@@ -1,8 +1,8 @@
 <?php
 
 return [
-    'paths' => ['api/*', 'oauth/*', 'sanctum/csrf-cookie'],
-    'allowed_origins' => [env('CORS_ALLOWED_ORIGINS', 'http://localhost:4000')],
+    'paths' => ['api/*', 'oauth/*', '*'],
+    'allowed_origins' => ['*'],
     'allowed_methods' => ['*'],
     'allowed_headers' => ['*'],
     'exposed_headers' => [],
