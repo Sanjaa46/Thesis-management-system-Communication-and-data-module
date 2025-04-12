@@ -194,14 +194,19 @@ class OAuthService
         try {
             Log::info('Obtaining new client credentials token');
             
+            // Create Basic Auth string
+            $auth = base64_encode($this->clientId . ':' . $this->clientSecret);
+            
             $response = $this->client->post($this->tokenEndpoint, [
+                'headers' => [
+                    'Authorization' => 'Basic ' . $auth,
+                    'Content-Type' => 'application/x-www-form-urlencoded',
+                ],
                 'form_params' => [
                     'grant_type' => 'client_credentials',
-                    'client_id' => $this->clientId,
-                    'client_secret' => $this->clientSecret,
                 ],
             ]);
-
+    
             $tokenData = json_decode($response->getBody(), true);
             
             // Log success without exposing tokens

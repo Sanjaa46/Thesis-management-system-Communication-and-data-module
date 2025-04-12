@@ -9,9 +9,14 @@ class Department extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['id', 'name'];
+    protected $fillable = ['id', 'name', 'programs'];
     public $incrementing = false;
     protected $keyType = 'string';
+    
+    // Cast programs to array
+    protected $casts = [
+        'programs' => 'array',
+    ];
 
     public function teachers()
     {

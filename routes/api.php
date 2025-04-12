@@ -1,11 +1,15 @@
 <?php
 
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProposalFormController;
 use App\Http\Controllers\TopicController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\TopicRequestController;
+use App\Http\Controllers\TopicResponseController;
 use App\Http\Controllers\Auth\OAuthController;
+use App\Http\Controllers\Api\DataSyncController;
 
 // OAuth token exchange endpoint
 Route::post('/oauth/exchange-token', [OAuthController::class, 'exchangeToken']);
@@ -26,6 +30,14 @@ Route::post('/oauth/token', [OAuthController::class, 'exchangeCodeForToken']);
 // Protected API routes
 Route::middleware('auth.api.token')->group(function () {
     Route::get('/user/role', [App\Http\Controllers\Api\RoleController::class, 'getUserRole']);
+
+    // Data Sync Routes
+    Route::prefix('sync')->group(function () {
+        Route::post('/departments', [DataSyncController::class, 'syncDepartments']);
+        Route::post('/teachers', [DataSyncController::class, 'syncTeachers']);
+        Route::post('/students', [DataSyncController::class, 'syncStudents']);
+        Route::post('/all', [DataSyncController::class, 'syncAll']);
+    });
 
     Route::get('/proposalform', [ProposalFormController::class, 'index']);
     Route::post('/proposalform', [ProposalFormController::class, 'update']);
