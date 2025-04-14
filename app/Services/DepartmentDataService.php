@@ -26,14 +26,15 @@ class DepartmentDataService
         $cacheKey = "hubapi_departments";
         
         // Check cache if enabled
-        if (config('hubapi.cache.enabled') && Cache::has($cacheKey)) {
+        if (config('hubapi.cache.enabled', false) && Cache::has($cacheKey)) {
             Log::info('Returning cached department data', ['cache_key' => $cacheKey]);
             return Cache::get($cacheKey);
         }
         
         // GraphQL query to fetch departments
+        // This query should match the structure from API.pdf
         $query = <<<'GRAPHQL'
-        query hr_GetDepartments($clientId: String!) {
+        query GetDepartments($clientId: String!) {
           hr_GetDepartments(
             clientId: $clientId
           ) {
@@ -64,8 +65,8 @@ class DepartmentDataService
             $departments = $result['hr_GetDepartments'];
             
             // Cache the results if enabled
-            if (config('hubapi.cache.enabled')) {
-                Cache::put($cacheKey, $departments, config('hubapi.cache.ttl'));
+            if (config('hubapi.cache.enabled', false)) {
+                Cache::put($cacheKey, $departments, config('hubapi.cache.ttl', 3600));
             }
             
             Log::info('Successfully fetched departments from HUB API', [

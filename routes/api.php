@@ -10,6 +10,8 @@ use App\Http\Controllers\TopicRequestController;
 use App\Http\Controllers\TopicResponseController;
 use App\Http\Controllers\Auth\OAuthController;
 use App\Http\Controllers\Api\DataSyncController;
+use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\StudentController;
 
 // OAuth token exchange endpoint
 Route::post('/oauth/exchange-token', [OAuthController::class, 'exchangeToken']);
@@ -29,7 +31,7 @@ Route::post('/oauth/token', [OAuthController::class, 'exchangeCodeForToken']);
 
 // Protected API routes
 Route::middleware('auth.api.token')->group(function () {
-    Route::get('/user/role', [App\Http\Controllers\Api\RoleController::class, 'getUserRole']);
+    Route::get('/user/role', [RoleController::class, 'getUserRole']);
 
     // Data Sync Routes
     Route::prefix('sync')->group(function () {
@@ -72,7 +74,24 @@ Route::middleware('auth.api.token')->group(function () {
     Route::post('/topic_decline', [TopicController::class, 'declineTopic']);
     Route::get('/topics_confirmed', [TopicRequestController::class, 'getConfirmedTopics']);
     Route::get('/topics/checkedtopicsbystud', [TopicController::class, 'getCheckedTopicsByStud']);
+    Route::get('/topics/checkedtopics', [TopicController::class, 'getCheckedTopics']);
     
     // Default routes
     Route::get('/topics/topiclistproposedbyuser', [TopicController::class, 'getTopicListProposedByUser']);
+    
+    // Students API
+    Route::get('/students/all', [StudentController::class, 'index']);
 });
+
+
+
+
+
+
+
+
+
+Route::get('/test-token', [App\Http\Controllers\TokenTestController::class, 'testToken']);
+
+
+Route::post('/hub-proxy', 'App\Http\Controllers\HubProxyController@proxyRequest')->middleware('auth.api.token');

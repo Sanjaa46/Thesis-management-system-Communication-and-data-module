@@ -2,7 +2,7 @@
 
 return [
     'paths' => ['api/*', 'oauth/*', '*'],
-    'allowed_origins' => ['*'],
+    'allowed_origins' => ['*', 'http://localhost:4000'],
     'allowed_methods' => ['*'],
     'allowed_headers' => ['*'],
     'exposed_headers' => [],

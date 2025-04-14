@@ -30,14 +30,15 @@ class TeacherDataService
         $cacheKey = "hubapi_teachers_{$departmentId}";
         
         // Check cache if enabled
-        if (config('hubapi.cache.enabled') && Cache::has($cacheKey)) {
+        if (config('hubapi.cache.enabled', false) && Cache::has($cacheKey)) {
             Log::info('Returning cached teacher data', ['cache_key' => $cacheKey]);
             return Cache::get($cacheKey);
         }
         
         // GraphQL query to fetch teachers
+        // This query should match the structure from API.pdf
         $query = <<<'GRAPHQL'
-        query hr_GetTeachers($clientId: String!, $departmentId: String!) {
+        query GetTeachers($clientId: String!, $departmentId: String!) {
           hr_GetTeachers(
             clientId: $clientId
             departmentId: $departmentId
@@ -47,7 +48,7 @@ class TeacherDataService
             department_name
             firstname
             lastname
-            email
+            mail
             phone
             position
             academic_degree
@@ -74,8 +75,8 @@ class TeacherDataService
             $teachers = $result['hr_GetTeachers'];
             
             // Cache the results if enabled
-            if (config('hubapi.cache.enabled')) {
-                Cache::put($cacheKey, $teachers, config('hubapi.cache.ttl'));
+            if (config('hubapi.cache.enabled', false)) {
+                Cache::put($cacheKey, $teachers, config('hubapi.cache.ttl', 3600));
             }
             
             Log::info('Successfully fetched teachers from HUB API', [
@@ -129,10 +130,9 @@ class TeacherDataService
                         'dep_id' => $teacherData['dep_id'],
                         'firstname' => $teacherData['firstname'],
                         'lastname' => $teacherData['lastname'],
-                        'mail' => $teacherData['email'],
+                        'mail' => $teacherData['mail'],
                         'phone' => $teacherData['phone'],
                         'numof_choosed_stud' => $teacher->numof_choosed_stud ?? 0,
-                        // Add any other fields that need updating
                     ]);
                     
                     $stats['updated']++;
@@ -143,10 +143,9 @@ class TeacherDataService
                         'dep_id' => $teacherData['dep_id'],
                         'firstname' => $teacherData['firstname'],
                         'lastname' => $teacherData['lastname'],
-                        'mail' => $teacherData['email'],
+                        'mail' => $teacherData['mail'],
                         'phone' => $teacherData['phone'],
                         'numof_choosed_stud' => 0,
-                        // Add any other required fields
                     ]);
                     
                     $stats['created']++;

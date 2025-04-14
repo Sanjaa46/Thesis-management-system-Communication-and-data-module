@@ -33,15 +33,16 @@ class StudentDataService
         $cacheKey = "hubapi_students_{$departmentId}_{$semester}_{$thesisCourse}";
         
         // Check cache if enabled
-        if (config('hubapi.cache.enabled') && Cache::has($cacheKey)) {
+        if (config('hubapi.cache.enabled', false) && Cache::has($cacheKey)) {
             Log::info('Returning cached student data', ['cache_key' => $cacheKey]);
             return Cache::get($cacheKey);
         }
         
         // GraphQL query to fetch students
+        // This query should match the structure from API.pdf
         $query = <<<'GRAPHQL'
-        query sisi_GetStudentsInfo($clientId: String!, $departmentId: String!, $semesterId: String!, $courseCode: String!) {
-          sisi_GetStudentsInfo(
+        query GetStudentsEnrolledInThesis($clientId: String!, $departmentId: String!, $semesterId: String!, $courseCode: String!) {
+          sisi_GetStudentsEnrolledInThesis(
             clientId: $clientId
             departmentId: $departmentId
             semesterId: $semesterId
@@ -54,7 +55,7 @@ class StudentDataService
             personal_email
             program_name
             program_id
-            phone_number
+            phone
             department_id
           }
         }
@@ -71,19 +72,17 @@ class StudentDataService
             // Execute the GraphQL query
             $result = $this->graphqlClient->executeQuery($query, $variables);
             
-            if (!$result || !isset($result['sisi_GetStudentsInfo'])) {
-                Log::error('Failed to fetch students from HUB API', [
-                    'department_id' => $departmentId,
-                    'semester' => $semester,
-                ]);
-                return null;
+            if (!$result || !isset($result['sisi_GetStudentsEnrolledInThesis'])) {
+                // Fallback to a more generic student query if the specific one fails
+                Log::warning('Specific thesis student query failed, trying generic student query');
+                return $this->fetchStudentsGenericFromHubApi($departmentId);
             }
             
-            $students = $result['sisi_GetStudentsInfo'];
+            $students = $result['sisi_GetStudentsEnrolledInThesis'];
             
             // Cache the results if enabled
-            if (config('hubapi.cache.enabled')) {
-                Cache::put($cacheKey, $students, config('hubapi.cache.ttl'));
+            if (config('hubapi.cache.enabled', false)) {
+                Cache::put($cacheKey, $students, config('hubapi.cache.ttl', 3600));
             }
             
             Log::info('Successfully fetched students from HUB API', [
@@ -98,6 +97,53 @@ class StudentDataService
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
             ]);
+            return null;
+        }
+    }
+    
+    /**
+     * Fallback method to fetch students using a generic query
+     * 
+     * @param string $departmentId
+     * @return array|null
+     */
+    private function fetchStudentsGenericFromHubApi($departmentId)
+    {
+        $query = <<<'GRAPHQL'
+        query GetStudents($clientId: String!, $departmentId: String!) {
+          sisi_GetStudents(
+            clientId: $clientId
+            departmentId: $departmentId
+          ) {
+            sisi_id
+            firstname
+            lastname
+            student_email
+            personal_email
+            program_name
+            program_id
+            phone
+            department_id
+          }
+        }
+        GRAPHQL;
+        
+        $variables = [
+            'clientId' => config('oauth.client_id'),
+            'departmentId' => $departmentId
+        ];
+        
+        try {
+            $result = $this->graphqlClient->executeQuery($query, $variables);
+            
+            if (!$result || !isset($result['sisi_GetStudents'])) {
+                Log::error('Failed to fetch students with generic query');
+                return null;
+            }
+            
+            return $result['sisi_GetStudents'];
+        } catch (\Exception $e) {
+            Log::error('Exception in generic student fetch: ' . $e->getMessage());
             return null;
         }
     }
@@ -139,7 +185,7 @@ class StudentDataService
                         'lastname' => $studentData['lastname'],
                         'mail' => $studentData['student_email'] ?? $studentData['personal_email'],
                         'program' => $studentData['program_name'],
-                        'phone' => $studentData['phone_number'],
+                        'phone' => $studentData['phone'],
                         'dep_id' => $studentData['department_id'],
                         // Add any other fields that need updating
                     ]);
@@ -148,17 +194,16 @@ class StudentDataService
                 } else {
                     // Create new student
                     Student::create([
-                        'id' => $studentData['sisi_id'], // Note: 'id' is used since your model has it as fillable, not incrementing
+                        'id' => $studentData['sisi_id'], // Using sisi_id as id since it's the primary key
                         'sisi_id' => $studentData['sisi_id'],
                         'firstname' => $studentData['firstname'],
                         'lastname' => $studentData['lastname'],
                         'mail' => $studentData['student_email'] ?? $studentData['personal_email'],
                         'program' => $studentData['program_name'],
-                        'phone' => $studentData['phone_number'],
+                        'phone' => $studentData['phone'],
                         'dep_id' => $studentData['department_id'],
                         'is_choosed' => false,
                         'proposed_number' => 0,
-                        // Add any other required fields
                     ]);
                     
                     $stats['created']++;
