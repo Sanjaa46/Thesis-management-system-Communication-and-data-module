@@ -86,4 +86,10 @@ return [
     'api' => [
         'base_url' => env('API_BASE_URL', 'https://tree.num.edu.mn/gateway'),
     ],
+
+    // push notification
+    'webpush' => [
+        'public_key' => env('WEBPUSH_PUBLIC_KEY'),
+        'private_key' => env('WEBPUSH_PRIVATE_KEY'),
+    ],
 ];

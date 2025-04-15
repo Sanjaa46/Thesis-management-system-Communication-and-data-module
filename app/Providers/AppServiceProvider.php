@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\Sanctum;
+use App\Services\NotificationService;
 
 /**
  * Class AppServiceProvider.
@@ -28,6 +29,15 @@ class AppServiceProvider extends ServiceProvider
                 $app->make(\App\Services\OAuthService::class)
             );
         });
+        $this->app->singleton(NotificationService::class, function ($app) {
+            return new NotificationService();
+        });
+    }
+
+    protected function schedule(Schedule $schedule)
+    {
+        // Send scheduled notifications every minute
+        $schedule->command('notifications:send-scheduled')->everyMinute();
     }
 
     /**

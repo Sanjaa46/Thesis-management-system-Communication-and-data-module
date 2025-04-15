@@ -85,10 +85,44 @@ Route::middleware(['require.token'])->prefix('graphql-test')->group(function () 
 
 
 
+Route::get('/test-push', function () {
+    // Get authenticated user or first student
+    $user = auth()->user() ?? \App\Models\Student::first();
+    
+    // Get the user ID
+    $userId = $user->sisi_id ?? $user->id;
+    
+    // Log which user we're using
+    \Illuminate\Support\Facades\Log::info('Testing push notification for user', [
+        'user' => $user,
+        'user_id_used' => $userId
+    ]);
+    
+    // Check if the user has a subscription
+    $subscription = \App\Models\PushSubscription::where('user_id', $userId)->first();
+    
+    if (!$subscription) {
+        return "No subscription found for user ID: $userId. Please subscribe first.";
+    }
+    
+    $notificationService = app(\App\Services\NotificationService::class);
+    
+    $result = $notificationService->storePushNotification(
+        $userId,
+        'Test Notification',
+        'This is a test notification from your thesis management system',
+        null,
+        url('/')
+    );
+    
+    if ($result) {
+        return "Notification queued with ID: $result. Check your browser notifications!";
+    } else {
+        return "Failed to create notification. Check logs for details.";
+    }
+});
 
-// Route::prefix('graphql-test')->group(function () {
-//     Route::get('/connection', [App\Http\Controllers\GraphQLTestController::class, 'testConnection']);
-//     Route::get('/departments', [App\Http\Controllers\GraphQLTestController::class, 'testDepartments']);
-//     Route::get('/teachers', [App\Http\Controllers\GraphQLTestController::class, 'testTeachers']);
-//     Route::get('/students', [App\Http\Controllers\GraphQLTestController::class, 'testStudents']);
-// });
+
+Route::get('/subscribe-push', function () {
+    return view('subscribe-push');
+});

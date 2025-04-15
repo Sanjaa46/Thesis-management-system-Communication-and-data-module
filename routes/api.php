@@ -92,6 +92,65 @@ Route::middleware('auth.api.token')->group(function () {
     Route::get('/students/all', [StudentController::class, 'index']);
 });
 
+Route::middleware('auth.api.token')->group(function () {
+    // Send notifications
+    Route::post('/notifications', [App\Http\Controllers\NotificationController::class, 'store']);
+    
+    // Push notification subscription management
+    Route::post('/notifications/subscribe', [App\Http\Controllers\NotificationController::class, 'subscribe']);
+    Route::post('/notifications/unsubscribe', [App\Http\Controllers\NotificationController::class, 'unsubscribe']);
+    
+    // Get unread notifications
+    Route::get('/notifications/unread', [App\Http\Controllers\NotificationController::class, 'getUnread']);
+    
+    // Mark notification as read
+    Route::post('/notifications/{id}/read', [App\Http\Controllers\NotificationController::class, 'markAsRead']);
+});
+
+
+
+// Test push notification endpoint for authenticated users
+Route::middleware('auth.api.token')->post('/notifications/test', function (Request $request) {
+    $user = $request->user();
+    
+    // If user is not found, return error
+    if (!$user) {
+        return response()->json([
+            'success' => false,
+            'message' => 'User not authenticated'
+        ], 401);
+    }
+    
+    // Log the test request
+    Log::info('Frontend notification test requested', [
+        'user' => $user->sisi_id ?? $user->id
+    ]);
+    
+    $notificationService = app(\App\Services\NotificationService::class);
+    
+    // Get parameters from request or use defaults
+    $title = $request->input('title', 'Test Notification');
+    $content = $request->input('content', 'This is a test notification from your thesis management system');
+    $url = $request->input('url', url('/'));
+    
+    // Create the notification
+    $result = $notificationService->sendCombinedNotification(
+        $user->sisi_id ?? $user->id, // User ID
+        $user->nummail ?? $user->mail ?? $user->email, // User email
+        $title,
+        $content,
+        null, // No schedule (immediate)
+        $url
+    );
+    
+    return response()->json([
+        'success' => true,
+        'message' => 'Test notification sent',
+        'result' => $result
+    ]);
+});
+
+
 // Token testing route
 Route::get('/test-token', [App\Http\Controllers\TokenTestController::class, 'testToken']);
 
