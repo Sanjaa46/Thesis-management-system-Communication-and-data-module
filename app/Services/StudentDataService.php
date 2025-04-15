@@ -38,8 +38,7 @@ class StudentDataService
             return Cache::get($cacheKey);
         }
         
-        // GraphQL query to fetch students
-        // This query should match the structure from API.pdf
+        // GraphQL query to fetch students (based on the API.pdf requirements)
         $query = <<<'GRAPHQL'
         query GetStudentsEnrolledInThesis($clientId: String!, $departmentId: String!, $semesterId: String!, $courseCode: String!) {
           sisi_GetStudentsEnrolledInThesis(
@@ -187,14 +186,13 @@ class StudentDataService
                         'program' => $studentData['program_name'],
                         'phone' => $studentData['phone'],
                         'dep_id' => $studentData['department_id'],
-                        // Add any other fields that need updating
                     ]);
                     
                     $stats['updated']++;
                 } else {
                     // Create new student
                     Student::create([
-                        'id' => $studentData['sisi_id'], // Using sisi_id as id since it's the primary key
+                        'id' => $studentData['sisi_id'], // Using sisi_id as id
                         'sisi_id' => $studentData['sisi_id'],
                         'firstname' => $studentData['firstname'],
                         'lastname' => $studentData['lastname'],

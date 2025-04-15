@@ -37,7 +37,7 @@ class GraphQLTestController extends Controller
             // Simple query to test if we can connect to the GraphQL API
             $query = "{ __schema { queryType { name } } }";
             
-            // Let the service get the token from session
+            // Let the service get the token from session or client credentials
             $result = $this->graphqlClient->executeQuery($query);
             
             return response()->json([

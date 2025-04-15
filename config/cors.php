@@ -1,10 +1,17 @@
 <?php
 
 return [
-    'paths' => ['api/*', 'oauth/*', '*'],
-    'allowed_origins' => ['*', 'http://localhost:4000'],
+    'paths' => ['api/*', 'oauth/*', 'sanctum/csrf-cookie', '*'],
+    'allowed_origins' => [env('FRONTEND_URL', 'http://localhost:4000')],
     'allowed_methods' => ['*'],
-    'allowed_headers' => ['*'],
+    'allowed_headers' => [
+        'X-CSRF-TOKEN',
+        'Content-Type',
+        'X-Requested-With',
+        'Authorization',
+        'Origin',
+        'Accept',
+    ],
     'exposed_headers' => [],
     'max_age' => 0,
     'supports_credentials' => true,

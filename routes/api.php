@@ -12,6 +12,7 @@ use App\Http\Controllers\Auth\OAuthController;
 use App\Http\Controllers\Api\DataSyncController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\GraphQLTestController;
 
 // OAuth token exchange endpoint
 Route::post('/oauth/exchange-token', [OAuthController::class, 'exchangeToken']);
@@ -39,6 +40,14 @@ Route::middleware('auth.api.token')->group(function () {
         Route::post('/teachers', [DataSyncController::class, 'syncTeachers']);
         Route::post('/students', [DataSyncController::class, 'syncStudents']);
         Route::post('/all', [DataSyncController::class, 'syncAll']);
+    });
+
+    // GraphQL Testing Routes
+    Route::prefix('graphql-test')->group(function () {
+        Route::get('/connection', [GraphQLTestController::class, 'testConnection']);
+        Route::get('/departments', [GraphQLTestController::class, 'testDepartments']);
+        Route::get('/teachers', [GraphQLTestController::class, 'testTeachers']);
+        Route::get('/students', [GraphQLTestController::class, 'testStudents']);
     });
 
     Route::get('/proposalform', [ProposalFormController::class, 'index']);
@@ -83,15 +92,8 @@ Route::middleware('auth.api.token')->group(function () {
     Route::get('/students/all', [StudentController::class, 'index']);
 });
 
-
-
-
-
-
-
-
-
+// Token testing route
 Route::get('/test-token', [App\Http\Controllers\TokenTestController::class, 'testToken']);
 
-
-Route::post('/hub-proxy', 'App\Http\Controllers\HubProxyController@proxyRequest')->middleware('auth.api.token');
+// HUB API proxy endpoint
+Route::post('/hub-proxy', [App\Http\Controllers\HubProxyController::class, 'proxyRequest'])->middleware('auth.api.token');

@@ -31,8 +31,7 @@ class DepartmentDataService
             return Cache::get($cacheKey);
         }
         
-        // GraphQL query to fetch departments
-        // This query should match the structure from API.pdf
+        // GraphQL query to fetch departments (based on the API.pdf requirements)
         $query = <<<'GRAPHQL'
         query GetDepartments($clientId: String!) {
           hr_GetDepartments(

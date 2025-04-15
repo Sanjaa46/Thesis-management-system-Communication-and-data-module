@@ -15,7 +15,7 @@ class ApiService
     public function __construct(OAuthService $oauthService)
     {
         $this->client = new Client([
-            'verify' => config('oauth.verify_ssl', true),
+            'verify' => false,
             'timeout' => 30,
         ]);
         

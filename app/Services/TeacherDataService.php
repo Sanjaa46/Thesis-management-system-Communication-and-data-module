@@ -35,8 +35,7 @@ class TeacherDataService
             return Cache::get($cacheKey);
         }
         
-        // GraphQL query to fetch teachers
-        // This query should match the structure from API.pdf
+        // GraphQL query to fetch teachers (based on the API.pdf requirements)
         $query = <<<'GRAPHQL'
         query GetTeachers($clientId: String!, $departmentId: String!) {
           hr_GetTeachers(

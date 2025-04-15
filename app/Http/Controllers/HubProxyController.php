@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\HubProxyController;
+namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Services\GraphQLClientService;
@@ -17,7 +17,10 @@ class HubProxyController extends Controller
     
     public function proxyRequest(Request $request)
     {
-        // Validate the input
+        // Get the token from the request (set by middleware)
+        $accessToken = $request->attribute('access_token');
+        
+        // Validate the request
         $validated = $request->validate([
             'query' => 'required|string',
             'variables' => 'array|nullable',
@@ -27,8 +30,8 @@ class HubProxyController extends Controller
         $query = $validated['query'];
         $variables = $validated['variables'] ?? [];
         
-        // Execute the GraphQL query using the token from session
-        $result = $this->graphqlClient->executeQuery($query, $variables);
+        // Execute the query
+        $result = $this->graphqlClient->executeQuery($query, $variables, $accessToken);
         
         // Return the response
         if ($result === null) {
