@@ -55,7 +55,7 @@ Route::middleware('auth.api.token')->group(function () {
     
     // Topic related routes
     Route::post('/topic/store', [TopicController::class, 'store']);
-    Route::apiResource('topics', TopicController::class);
+    
     
     // Other protected routes
     Route::get('/teacher/{id}', [TeacherController::class, 'show']);
@@ -87,6 +87,7 @@ Route::middleware('auth.api.token')->group(function () {
     
     // Default routes
     Route::get('/topics/topiclistproposedbyuser', [TopicController::class, 'getTopicListProposedByUser']);
+    Route::apiResource('topics', TopicController::class);
     
     // Students API
     Route::get('/students/all', [StudentController::class, 'index']);
