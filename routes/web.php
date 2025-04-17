@@ -126,3 +126,26 @@ Route::get('/test-push', function () {
 Route::get('/subscribe-push', function () {
     return view('subscribe-push');
 });
+
+
+
+
+
+
+
+
+Route::get('/test-email', function() {
+    $notificationService = app(\App\Services\NotificationService::class);
+    
+    $result = $notificationService->sendEmailNotification(
+        '21b1num0435@stud.num.edu.mn',  // Replace with your test email
+        'Test Email Notification',
+        'This is a test email notification from your thesis management system.',
+        ['url' => 'http://localhost:4000']
+    );
+    
+    return [
+        'success' => $result,
+        'message' => $result ? 'Email sent successfully' : 'Failed to send email'
+    ];
+});

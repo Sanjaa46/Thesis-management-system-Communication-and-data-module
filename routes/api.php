@@ -33,6 +33,14 @@ Route::prefix('public')->group(function () {
 
 Route::post('/oauth/token', [OAuthController::class, 'exchangeCodeForToken']);
 
+// Notification routes accessible with token auth (not middleware group)
+Route::middleware('auth.api.token')->group(function () {
+    Route::get('/notifications/unread', [NotificationController::class, 'getUnread']);
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/subscribe', [NotificationController::class, 'subscribe']);
+    Route::post('/notifications/unsubscribe', [NotificationController::class, 'unsubscribe']);
+});
+
 // Protected API routes
 Route::middleware('auth.api.token')->group(function () {
     Route::get('/user/role', [RoleController::class, 'getUserRole']);
@@ -95,19 +103,9 @@ Route::middleware('auth.api.token')->group(function () {
     // Students API
     Route::get('/students/all', [StudentController::class, 'index']);
 
-
-
-
-
-
-
-    // Existing notification routes
+    // Other notification routes
     Route::post('/notifications', [NotificationController::class, 'store']);
-    Route::get('/notifications/unread', [NotificationController::class, 'getUnread']);
-    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
-    
-    // New template notification route
-    Route::post('/notification-templates', [NotificationTemplateController::class, 'store']);
+    Route::post('/notifications/template', [NotificationController::class, 'sendTemplateNotification']);
     
     // Template management routes
     Route::get('/notification-templates', [NotificationTemplateController::class, 'index']);

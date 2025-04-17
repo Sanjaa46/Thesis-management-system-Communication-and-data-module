@@ -23,15 +23,40 @@ class TopicController extends Controller
     //Хянагч багш нь оюутан болон багшийн дэвшүүлсэн сэдвийг авах функц
     public function getSubmittedTopicsByType($type)
     {
-        if (!in_array($type, ['student', 'teacher'])) {
-            return response()->json(['error' => 'Invalid type'], 400);
+        try {
+            if (!in_array($type, ['student', 'teacher'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid type specified',
+                    'error' => 'Type must be either "student" or "teacher"'
+                ], 400);
+            }
+
+            $topics = Topic::where('status', 'submitted')
+                ->where('created_by_type', $type)
+                ->get();
+
+            // Log the retrieved topics for debugging
+            Log::info('Retrieved submitted topics', [
+                'type' => $type, 
+                'count' => $topics->count(),
+                'first_topic' => $topics->first() ? $topics->first()->id : 'none'
+            ]);
+
+            return response()->json($topics);
+        } catch (\Exception $e) {
+            Log::error('Error retrieving submitted topics', [
+                'type' => $type,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve submitted topics',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $topics = Topic::where('status', 'submitted')
-            ->where('created_by_type', $type)
-            ->get();
-
-        return response()->json($topics);
     }
 
     //Багш дэвшүүлж батлагдсан сэдвийн жагсаалт авах функц

@@ -21,7 +21,7 @@ class OAuthService
     public function __construct()
     {
         $this->client = new Client([
-            'verify' => false, // Host hiihed true bolgoh ystoi
+            'verify' => config('oauth.verify_ssl', false),
             'timeout' => 30,
         ]);
 
@@ -38,9 +38,10 @@ class OAuthService
      * Generate authorization URL for the OAuth flow
      *
      * @param string $state A random state parameter to prevent CSRF
+     * @param string|null $overrideRedirectUri Override the default redirect URI
      * @return string The authorization URL
      */
-    public function getAuthorizationUrl($state = null)
+    public function getAuthorizationUrl($state = null, $overrideRedirectUri = null)
     {
         $params = [
             'client_id' => $this->clientId,
@@ -119,6 +120,7 @@ class OAuthService
             $response = $this->client->get($this->resourceEndpoint, [
                 'headers' => [
                     'Authorization' => 'Bearer ' . $accessToken,
+                    'Accept' => 'application/json',
                 ],
             ]);
 
@@ -127,6 +129,7 @@ class OAuthService
             // Log success without exposing user data
             Log::info('Successfully fetched user data', [
                 'data_count' => is_array($userData) ? count($userData) : 'not_array',
+                'data_sample' => is_array($userData) && !empty($userData) ? json_encode(array_slice($userData, 0, 1)) : 'empty',
             ]);
             
             return $userData;
@@ -194,16 +197,15 @@ class OAuthService
         try {
             Log::info('Obtaining new client credentials token');
             
-            // Create Basic Auth string
-            $auth = base64_encode($this->clientId . ':' . $this->clientSecret);
-            
             $response = $this->client->post($this->tokenEndpoint, [
-                'headers' => [
-                    'Authorization' => 'Basic ' . $auth,
-                    'Content-Type' => 'application/x-www-form-urlencoded',
-                ],
                 'form_params' => [
                     'grant_type' => 'client_credentials',
+                    'client_id' => $this->clientId,
+                    'client_secret' => $this->clientSecret,
+                ],
+                'headers' => [
+                    'Content-Type' => 'application/x-www-form-urlencoded',
+                    'Accept' => 'application/json',
                 ],
             ]);
     

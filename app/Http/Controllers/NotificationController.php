@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use App\Models\Notification;
 
 class NotificationController extends Controller
 {
@@ -263,18 +264,42 @@ class NotificationController extends Controller
     public function getUnread(Request $request)
     {
         try {
-            // Get the authenticated user
-            $user = $request->user();
+            // Check for token in request attributes (set by middleware)
+            $authUser = $request->attributes->get('auth_user');
             
-            if (!$user) {
+            if (!$authUser) {
+                Log::warning('getUnread called without auth user', [
+                    'has_token' => (bool)$request->attributes->get('access_token'),
+                    'headers' => $request->headers->all()
+                ]);
+                
                 return response()->json([
                     'success' => false,
                     'message' => 'User not authenticated'
                 ], 401);
             }
+            
+            // Get the user ID - different formats possible from OAuth
+            $userId = $authUser['uid'] ?? $authUser['username'] ?? null;
+            
+            if (!$userId) {
+                Log::error('Unable to determine user ID from auth data', [
+                    'auth_data_keys' => array_keys($authUser),
+                    'has_uid' => isset($authUser['uid']),
+                    'has_username' => isset($authUser['username'])
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unable to determine user ID'
+                ], 400);
+            }
+            
+            // Log what user ID we're using
+            Log::info('Getting unread notifications for user', ['user_id' => $userId]);
 
-            // Get unread notifications
-            $notifications = \App\Models\Notification::where('user_id', $user->id)
+            // Get unread notifications - use the fully qualified namespace here
+            $notifications = \App\Models\Notification::where('user_id', $userId)
                 ->where('is_read', false)
                 ->where('sent', true)
                 ->orderBy('created_at', 'desc')
@@ -287,7 +312,8 @@ class NotificationController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Error getting unread notifications', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
             
             return response()->json([
