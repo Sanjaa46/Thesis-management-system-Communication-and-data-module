@@ -182,4 +182,15 @@ class TopicRequestController extends Controller
         }
     }
 
+    public function approve($id)
+{
+    $request = TopicRequest::findOrFail($id);
+    $request->is_selected = true;
+    $request->selected_at = now();
+    $request->approved_by_id = auth()->id(); // баталсан багш
+    $request->save();
+
+    return response()->json(['message' => 'Сэдэв батлагдлаа']);
+}
+
 }

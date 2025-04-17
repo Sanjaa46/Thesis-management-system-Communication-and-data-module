@@ -24,4 +24,17 @@ class Student extends Model
     {
         return $this->morphMany(Topic::class, 'created_by');
     }
+    public function topicRequestApproved()
+    {
+        return $this->hasOne(TopicRequest::class)
+                    ->where('status', 'approved')
+                    ->latest(); // хамгийн сүүлд баталсан
+    }
+    public function selectedTopicRequest()
+    {
+        return $this->hasOne(TopicRequest::class, 'requested_by_id')
+                    ->where('is_selected', true)
+                    ->where('requested_by_type', 'student');
+    }
+
 }

@@ -28,4 +28,16 @@ class TopicRequest extends Model
     {
         return $this->belongsTo(Topic::class, 'topic_id');
     }
+
+    public function teacher()
+    {
+        return $this->belongsTo(Teacher::class);
+    }
+
+    public function approvedBy()
+    {
+        return $this->belongsTo(Teacher::class, 'approved_by_id');
+    }
+
+
 }
