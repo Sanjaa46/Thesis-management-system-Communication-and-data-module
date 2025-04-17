@@ -31,6 +31,7 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('activitylog:clean')->daily();
         $schedule->command('notifications:send-scheduled')->everyMinute();
+        $schedule->command('notifications:deadline-reminders')->dailyAt('09:00');
     }
 
     /**

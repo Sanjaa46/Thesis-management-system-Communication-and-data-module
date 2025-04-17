@@ -353,4 +353,60 @@ class NotificationController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Send a notification using a template to multiple recipients
+     */
+    public function sendTemplateNotification(Request $request)
+    {
+        // Validate the request
+        $validator = Validator::make($request->all(), [
+            'template_id' => 'required|exists:thesis_notification_templates,id',
+            'recipients' => 'required|array',
+            'recipients.*.id' => 'required|string',
+            'recipients.*.email' => 'required|email',
+            'data' => 'nullable|array',
+            'schedule' => 'nullable|date',
+            'url' => 'nullable|string|url',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $templateId = $request->input('template_id');
+            $recipients = $request->input('recipients');
+            $data = $request->input('data', []);
+            $schedule = $request->input('schedule');
+            $url = $request->input('url');
+            
+            $results = $this->notificationService->sendBatchFromTemplate(
+                $templateId,
+                $recipients,
+                $data,
+                $schedule,
+                $url
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Notifications processed',
+                'results' => $results
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error sending template notification', [
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send notifications',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

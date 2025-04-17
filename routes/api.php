@@ -13,6 +13,9 @@ use App\Http\Controllers\Api\DataSyncController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\GraphQLTestController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\NotificationTemplateController;
+use App\Http\Controllers\NotificationSettingController;
 
 // OAuth token exchange endpoint
 Route::post('/oauth/exchange-token', [OAuthController::class, 'exchangeToken']);
@@ -91,69 +94,27 @@ Route::middleware('auth.api.token')->group(function () {
     
     // Students API
     Route::get('/students/all', [StudentController::class, 'index']);
+
+
+
+
+
+
+
+    // Existing notification routes
+    Route::post('/notifications', [NotificationController::class, 'store']);
+    Route::get('/notifications/unread', [NotificationController::class, 'getUnread']);
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    
+    // New template notification route
+    Route::post('/notification-templates', [NotificationTemplateController::class, 'store']);
+    
+    // Template management routes
+    Route::get('/notification-templates', [NotificationTemplateController::class, 'index']);
+    Route::post('/notification-templates', [NotificationTemplateController::class, 'store']);
+    Route::get('/notification-templates/{id}', [NotificationTemplateController::class, 'show']);
+    Route::put('/notification-templates/{id}', [NotificationTemplateController::class, 'update']);
+    Route::delete('/notification-templates/{id}', [NotificationTemplateController::class, 'destroy']);
+    Route::get('/notification-settings', [NotificationSettingController::class, 'index']);
+    Route::post('/notification-settings', [NotificationSettingController::class, 'update']);
 });
-
-Route::middleware('auth.api.token')->group(function () {
-    // Send notifications
-    Route::post('/notifications', [App\Http\Controllers\NotificationController::class, 'store']);
-    
-    // Push notification subscription management
-    Route::post('/notifications/subscribe', [App\Http\Controllers\NotificationController::class, 'subscribe']);
-    Route::post('/notifications/unsubscribe', [App\Http\Controllers\NotificationController::class, 'unsubscribe']);
-    
-    // Get unread notifications
-    Route::get('/notifications/unread', [App\Http\Controllers\NotificationController::class, 'getUnread']);
-    
-    // Mark notification as read
-    Route::post('/notifications/{id}/read', [App\Http\Controllers\NotificationController::class, 'markAsRead']);
-});
-
-
-
-// Test push notification endpoint for authenticated users
-Route::middleware('auth.api.token')->post('/notifications/test', function (Request $request) {
-    $user = $request->user();
-    
-    // If user is not found, return error
-    if (!$user) {
-        return response()->json([
-            'success' => false,
-            'message' => 'User not authenticated'
-        ], 401);
-    }
-    
-    // Log the test request
-    Log::info('Frontend notification test requested', [
-        'user' => $user->sisi_id ?? $user->id
-    ]);
-    
-    $notificationService = app(\App\Services\NotificationService::class);
-    
-    // Get parameters from request or use defaults
-    $title = $request->input('title', 'Test Notification');
-    $content = $request->input('content', 'This is a test notification from your thesis management system');
-    $url = $request->input('url', url('/'));
-    
-    // Create the notification
-    $result = $notificationService->sendCombinedNotification(
-        $user->sisi_id ?? $user->id, // User ID
-        $user->nummail ?? $user->mail ?? $user->email, // User email
-        $title,
-        $content,
-        null, // No schedule (immediate)
-        $url
-    );
-    
-    return response()->json([
-        'success' => true,
-        'message' => 'Test notification sent',
-        'result' => $result
-    ]);
-});
-
-
-// Token testing route
-Route::get('/test-token', [App\Http\Controllers\TokenTestController::class, 'testToken']);
-
-// HUB API proxy endpoint
-Route::post('/hub-proxy', [App\Http\Controllers\HubProxyController::class, 'proxyRequest'])->middleware('auth.api.token');

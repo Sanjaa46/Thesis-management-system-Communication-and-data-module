@@ -17,11 +17,20 @@ class TopicResponseController extends Controller
             'note' => 'nullable',
             'res_date' => 'required|date',
         ]);
+        
         $response = TopicResponse::create($validated);
 
         $topic = Topic::findOrFail($validated['topic_id']);
         $topic->status = $validated['res'] === 'approved' ? 'approved' : 'refused';
         $topic->save();
+
+        // Fire event if the topic is approved
+        if ($validated['res'] === 'approved') {
+            $student = Student::findOrFail($topic->created_by_id);
+            $supervisor = Supervisor::findOrFail($validated['supervisor_id']);
+            
+            event(new TopicApproved($topic, $student, $supervisor));
+        }
 
         return response()->json([
             'message' => 'Response saved and topic status updated successfully!',

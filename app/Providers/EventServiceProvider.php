@@ -19,6 +19,15 @@ class EventServiceProvider extends ServiceProvider
      * @var array
      */
     protected $listen = [
+        \App\Events\TopicApproved::class => [
+            \App\Listeners\SendTopicApprovalNotification::class,
+        ],
+        \App\Events\DeadlineApproaching::class => [
+            \App\Listeners\SendDeadlineReminderNotification::class,
+        ],
+        \App\Events\EvaluationSubmitted::class => [
+            \App\Listeners\SendEvaluationNotification::class,
+        ],
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
