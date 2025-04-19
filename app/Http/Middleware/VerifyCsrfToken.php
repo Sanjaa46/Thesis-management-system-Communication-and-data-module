@@ -32,6 +32,7 @@ class VerifyCsrfToken extends Middleware
         'debugbar/*',
         'oauth/*',
         'api/*',
+        'sanctum/csrf-cookie',
         'admin/*',
         'department/*',
         'impersonate/*',

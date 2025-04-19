@@ -6,6 +6,7 @@ return [
     'allowed_methods' => ['*'],
     'allowed_headers' => [
         'X-CSRF-TOKEN',
+        'X-XSRF-TOKEN',
         'Content-Type',
         'X-Requested-With',
         'Authorization',
