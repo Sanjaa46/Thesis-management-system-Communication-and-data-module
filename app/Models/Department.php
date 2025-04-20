@@ -9,6 +9,8 @@ class Department extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     protected $fillable = ['id', 'name', 'programs'];
     public $incrementing = false;
     protected $keyType = 'string';

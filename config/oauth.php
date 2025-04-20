@@ -48,4 +48,11 @@ return [
     // Token expiration buffer time in seconds
     // Refresh tokens this many seconds before they actually expire
     'token_refresh_buffer' => env('OAUTH_TOKEN_REFRESH_BUFFER', 60),
+
+
+
+
+
+
+    'hub_api_endpoint' => env('HUB_API_ENDPOINT', 'http://localhost:8080/graphql'),
 ];

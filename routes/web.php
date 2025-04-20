@@ -15,6 +15,9 @@ use App\Http\Controllers\TopicRequestController;
 use App\Http\Controllers\TopicResponseController;
 use App\Http\Controllers\Auth\OAuthController;
 
+use App\Services\HubApiService;
+use App\Http\Controllers\DataSyncController;
+
 //department
 Route::get('/proposalform', [ProposalFormController::class, 'index']);
 Route::post('/proposalform', [ProposalFormController::class, 'update']);
@@ -149,3 +152,41 @@ Route::get('/test-email', function() {
         'message' => $result ? 'Email sent successfully' : 'Failed to send email'
     ];
 });
+
+
+
+
+
+
+
+
+
+
+
+Route::get('/test-hub-api', function (HubApiService $hubApiService) {
+    // Test departments
+    $departments = $hubApiService->getDepartments();
+    dump('Departments:', $departments);
+    
+    // Test teachers
+    $teachers = $hubApiService->getTeachers();
+    dump('Teachers:', $teachers);
+    
+    // Test students
+    $students = $hubApiService->getStudentsInfo();
+    dump('Students:', $students);
+    
+    return 'Check the dumped data above';
+});
+
+
+
+
+
+
+
+
+Route::get('/sync/departments', [DataSyncController::class, 'syncDepartments']);
+Route::get('/sync/teachers', [DataSyncController::class, 'syncTeachers']);
+Route::get('/sync/students', [DataSyncController::class, 'syncStudents']);
+Route::get('/sync/all', [DataSyncController::class, 'syncAll']);

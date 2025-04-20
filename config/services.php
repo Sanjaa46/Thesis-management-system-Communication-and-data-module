@@ -92,4 +92,12 @@ return [
         'public_key' => env('WEBPUSH_PUBLIC_KEY'),
         'private_key' => env('WEBPUSH_PRIVATE_KEY'),
     ],
+
+
+    'hub_api' => [
+        'endpoint' => env('HUB_API_ENDPOINT', 'http://localhost:8080/graphql'),
+        'client_id' => env('HUB_API_CLIENT_ID', '798563af3a3b4263a3625a5283e288a5'),
+        'client_secret' => env('HUB_API_CLIENT_SECRET', 'edbc8656a61f4c8191c7415c5f022f7d.6b704c67fd78422290943dd40c1c8dfc'),
+        'verify_ssl' => env('HUB_API_VERIFY_SSL', false),
+    ],
 ];
